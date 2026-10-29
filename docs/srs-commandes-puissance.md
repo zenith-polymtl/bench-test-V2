@@ -1,7 +1,5 @@
 # SRS – Gestion des commandes de puissance
 
-Oct 24, 2026 · @Griselda
-
 ## 1. Introduction
 
 Ce document fixe les exigences d'envoi, d'acquittement et de surveillance des commandes de puissance entre le Teensy de contrôle et le Teensy capteurs du banc d'essai moteur (Zénith).

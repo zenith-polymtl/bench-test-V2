@@ -1,7 +1,5 @@
 # SRS – Séquence de démarrage
 
-Oct 24, 2026 · @Griselda
-
 ## 1. Introduction
 
 Ce document fixe les exigences de la séquence de démarrage du banc d'essai moteur (Zénith) : comment le système passe d'un état éteint ou arrêté à l'état ARMED, prêt à recevoir des commandes de puissance.

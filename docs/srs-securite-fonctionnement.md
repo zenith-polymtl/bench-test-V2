@@ -1,7 +1,5 @@
 # SRS – Sécurité en fonctionnement
 
-Oct 25, 2026 · @Griselda
-
 ## 1. Introduction
 
 Ce document fixe les conditions dans lesquelles le Teensy capteurs doit arrêter le banc d'essai moteur (Zénith) pendant un essai, c'est-à-dire une fois l'état ARMED atteint.
