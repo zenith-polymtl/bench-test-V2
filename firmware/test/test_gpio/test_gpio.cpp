@@ -2,7 +2,7 @@
 // PC; it follows the same contract and is checked by compiling it for the Teensy.
 #include <unity.h>
 
-#include "communication/mock/mock_gpio.hpp"
+#include "hal/mock/mock_gpio.hpp"
 
 using namespace hal;
 

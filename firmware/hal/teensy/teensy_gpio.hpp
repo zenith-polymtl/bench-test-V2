@@ -1,6 +1,6 @@
 #pragma once
 // Teensy 4.1 implementation of IGpio. The only place that touches Arduino GPIO functions.
-#include "communication/gpio.hpp"
+#include "hal/gpio.hpp"
 
 namespace hal {
 

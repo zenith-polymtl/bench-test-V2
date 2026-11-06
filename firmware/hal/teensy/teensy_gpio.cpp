@@ -1,4 +1,4 @@
-#include "communication/teensy/teensy_gpio.hpp"
+#include "hal/teensy/teensy_gpio.hpp"
 
 #include <Arduino.h>
 
