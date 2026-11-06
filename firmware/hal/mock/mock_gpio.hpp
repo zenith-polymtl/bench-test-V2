@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "communication/gpio.hpp"
+#include "hal/gpio.hpp"
 
 namespace hal {
 
@@ -50,12 +50,10 @@ public:
 
     // --- Test helpers (not part of IGpio) ---
 
-    // Simulates the outside world driving an input pin (e.g. the E-stop being pressed).
     void setInputLevel(uint8_t pin, GpioLevel level) {
         if (pin < GPIO_PIN_COUNT && modes_[pin] == Mode::Input) levels_[pin] = level;
     }
 
-    // Current level of an output pin; Low if the pin is not an output.
     GpioLevel outputLevel(uint8_t pin) const {
         if (pin >= GPIO_PIN_COUNT || modes_[pin] != Mode::Output) return GpioLevel::Low;
         return levels_[pin];
@@ -83,4 +81,4 @@ private:
     bool overflowed_ = false;
 };
 
-}  // namespace hal
+}
