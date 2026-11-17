@@ -18,16 +18,20 @@ uint8_t toArduinoMode(SpiMode mode) {
 }  // namespace
 
 void TeensySpi::begin() {
-    // CS must idle High (deselected). The order is output first, then High, because on the
-    // Teensy 4 core digitalWrite() on a pin still in INPUT mode only toggles its pull-up and
-    // does not set the output latch (from memory of the core, not re-read or measured):
-    // High-then-OUTPUT could pulse CS Low at boot. Cost: CS may glitch for a few
-    // nanoseconds between the two calls, before any clock edge exists, so no chip frame
-    // can start. If that glitch matters, add an external pull-up on each CS line.
-    // Rejected: relying on the pin's reset state (undefined for this purpose).
+    // CS must idle High (deselected) from the very first moment it is driven, so the latch
+    // is preloaded BEFORE the pin becomes an output, like TeensyGpio::configureOutput().
+    // digitalWriteFast() is required, not digitalWrite(): in the Teensy 4 core
+    // (cores/teensy4/digital.c) digitalWrite() on a pin still in INPUT mode only changes the
+    // pull resistor, while digitalWriteFast() (core_pins.h, runtime-pin branch) writes the
+    // set / clear register whatever the direction. Read from the core source (1.62.0), not
+    // yet measured on hardware.
+    // Rejected: pinMode(OUTPUT) then digitalWrite(HIGH) (CS could pulse Low in between).
+    digitalWriteFast(cs_pin_, HIGH);
     pinMode(cs_pin_, OUTPUT);
-    digitalWrite(cs_pin_, HIGH);
     bus_.begin();
+    // A pure read (tx == nullptr) shifts out this fill byte. It is 0 by default; set it
+    // explicitly so the ISpi contract ("sends 0x00") doesn't depend on that default.
+    bus_.setTransferWriteFill(0x00);
     begun_ = true;
 }
 
@@ -35,21 +39,16 @@ bool TeensySpi::transfer(const uint8_t* tx, uint8_t* rx, size_t len) {
     if (!begun_ || len == 0 || len > SPI_MAX_TRANSFER_BYTES) return false;
     if (tx == nullptr && rx == nullptr) return false;
 
-    // The Teensy core transfer(buf, retbuf, count) takes one buffer pointer per direction.
-    // Pure read / pure write are handled with a local zero buffer / scratch buffer instead of
-    // relying on null pointers being accepted: not verified in the core source nor on
-    // hardware yet. If the core is confirmed to accept null for both, these can go away.
-    uint8_t zeros[SPI_MAX_TRANSFER_BYTES] = {};
-    uint8_t scratch[SPI_MAX_TRANSFER_BYTES];
-    const uint8_t* out = (tx != nullptr) ? tx : zeros;
-    uint8_t* in = (rx != nullptr) ? rx : scratch;
-
     // beginTransaction() applies THIS device's clock and mode, so devices with different
     // settings can share the bus. Rejected: configuring the bus once globally (the ICM-42688
     // in mode 3 and the nRF24 in mode 0 would corrupt each other).
     bus_.beginTransaction(SPISettings(config_.clock_hz, MSBFIRST, toArduinoMode(config_.mode)));
     digitalWrite(cs_pin_, LOW);
-    bus_.transfer(out, in, len);
+    // Teensy 4 SPIClass::transfer(buf, retbuf, count) (libraries/SPI/SPI.cpp, LPSPI version)
+    // accepts a null buf (sends the fill byte, see begin()) and a null retbuf (discards the
+    // received bytes), which is exactly the ISpi contract. Read from the library source
+    // (1.62.0), not yet measured on hardware.
+    bus_.transfer(tx, rx, len);
     digitalWrite(cs_pin_, HIGH);  // always raised, no early return between LOW and here
     bus_.endTransaction();
     return true;
