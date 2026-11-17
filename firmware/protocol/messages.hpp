@@ -25,9 +25,9 @@
 //    32-bit fields may be unaligned: read them with memcpy from the RF buffer, never
 //    through a reference or pointer to a member.
 //
-// 4. Everything lives in `namespace protocol`: `SystemState` already exists in NRF24Link.h
-//    (old code, to be replaced, see messages.md section 7) and both must coexist during
-//    the migration.
+// 4. Everything lives in `namespace protocol`, so the short names (`SystemState`, ...) do not
+//    pollute the global namespace or clash with another library's types. (Namespaces do not
+//    protect against Arduino macros such as HIGH / LOW: avoid those names, see hal/gpio.hpp.)
 //
 // About "setpoint" (CMD_POWER, CMD_ARM, TlmStatus::setpoint_applied)
 //

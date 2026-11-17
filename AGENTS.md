@@ -54,7 +54,7 @@ firmware/src/
   modules/         sensor_teensy, control_teensy, telemetry_pi; wire everything together
 ```
 
-The current code still lives under `firmware/lib/` (ESCcontroller, IMUReader, NRF24Link, PowerMonitor, LoadCellReader) and will be migrated to this layout.
+The legacy drivers in `firmware/lib/` (ESCcontroller, IMUReader, NRF24Link, PowerMonitor, LoadCellReader) were removed; new drivers are written directly in this layout. `firmware/src/main.cpp` is a placeholder until `modules/sensor_teensy/` exists.
 
 Dependency rules:
 

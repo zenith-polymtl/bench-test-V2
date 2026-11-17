@@ -1,0 +1,75 @@
+# clangd (editor) configuration. It does NOT build anything: firmware is built only with
+# PlatformIO (pio run / pio test). This file only tells the editor where the includes are,
+# so it stops reporting "file not found" on headers that PlatformIO builds fine.
+#
+# Why this and not a compile_commands.json (pio run -t compiledb)? The build runs in Docker,
+# so a generated database contains container paths (/home/dev/firmware/...) that the editor
+# on the host cannot resolve.
+#
+# Relative -I paths resolve against the directory of the file being edited, hence one
+# fragment per depth below firmware/. The include root is firmware/ (platformio.ini:
+# src_dir = .), so `#include "hal/spi.hpp"` works from anywhere.
+
+CompileFlags:
+  Add: [-std=gnu++17, -Wall]
+---
+If:
+  PathMatch: firmware/[^/]+/[^/]+
+CompileFlags:
+  Add: [-I..]
+---
+If:
+  PathMatch: firmware/[^/]+/[^/]+/[^/]+
+CompileFlags:
+  Add: [-I../..]
+---
+If:
+  PathMatch: firmware/[^/]+/[^/]+/[^/]+/[^/]+
+CompileFlags:
+  Add: [-I../../..]
+---
+# Native tests: Unity is fetched by `pio test -e native` into .pio/libdeps (not committed).
+# Run it once so this path exists.
+If:
+  PathMatch: firmware/test/.*
+CompileFlags:
+  Add: [-I../../.pio/libdeps/native/Unity/src]
+
+# ---------------------------------------------------------------------------------------
+# Teensy-only files (firmware/hal/teensy/, firmware/src/) include Arduino.h and SPI.h from
+# the Teensy core, whose location is specific to each machine, so it cannot be committed.
+# Without the block below the editor reports "'Arduino.h' file not found" on those files
+# only; PlatformIO still builds them. To silence it, copy the block into your personal
+# ~/.config/clangd/config.yaml and fix the two paths (Teensyduino installed through the
+# Arduino IDE; with PlatformIO use ~/.platformio/packages/framework-arduinoteensy and
+# toolchain-gccarmnoneeabi-teensy instead).
+#
+#   If:
+#     PathMatch: .*/firmware/(hal/teensy|src)/.*
+#   CompileFlags:
+#     Add:
+#       - --target=arm-none-eabi
+#       - -mcpu=cortex-m7
+#       - -mfloat-abi=hard
+#       - -mfpu=fpv5-d16
+#       - -mthumb
+#       # Clang's int32_t is `int`, GCC/newlib's is `long`: match GCC or the core's
+#       # `int32_t random(void)` clashes with newlib's `long random(void)`.
+#       - -U__INT32_TYPE__
+#       - -D__INT32_TYPE__=long int
+#       - -U__UINT32_TYPE__
+#       - -D__UINT32_TYPE__=long unsigned int
+#       - -D__IMXRT1062__
+#       - -DARDUINO_TEENSY41
+#       - -DTEENSYDUINO=159
+#       - -DARDUINO=10819
+#       - -DF_CPU=600000000
+#       - -DUSB_SERIAL
+#       - -DLAYOUT_US_ENGLISH
+#       - --gcc-toolchain=<HOME>/.arduino15/packages/teensy/tools/teensy-compile/15.2.1/arm
+#       - -isystem<HOME>/.arduino15/packages/teensy/tools/teensy-compile/15.2.1/arm/arm-none-eabi/include/c++/15.2.1
+#       - -isystem<HOME>/.arduino15/packages/teensy/tools/teensy-compile/15.2.1/arm/arm-none-eabi/include/c++/15.2.1/arm-none-eabi
+#       - -isystem<HOME>/.arduino15/packages/teensy/tools/teensy-compile/15.2.1/arm/arm-none-eabi/include
+#       - -I<HOME>/.arduino15/packages/teensy/hardware/avr/1.62.0/cores/teensy4
+#       - -I<HOME>/.arduino15/packages/teensy/hardware/avr/1.62.0/libraries/SPI
+# ---------------------------------------------------------------------------------------
