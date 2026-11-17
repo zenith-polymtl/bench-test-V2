@@ -1,7 +1,5 @@
 #include "hal/teensy/teensy_can.hpp"
 
-#include <Arduino.h>
-
 namespace hal {
 
 TeensyCan* TeensyCan::active_instance_ = nullptr;
